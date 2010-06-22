@@ -109,12 +109,12 @@ func prepareRequest(username string, secret string, rawurl string, method string
     
     userinfo := strings.Join([]string { username, secret }, ":");
     enc      := base64.URLEncoding;
- 	encoded  := make([]byte, enc.EncodedLen(len(userinfo)));
+    encoded  := make([]byte, enc.EncodedLen(len(userinfo)));
  	
- 	enc.Encode(encoded, []byte(userinfo));
+    enc.Encode(encoded, []byte(userinfo));
  	
- 	request.Header = make(map[string]string);
- 	request.Header["Authorization"] = "Basic " + string(encoded);
+    request.Header = make(map[string]string);
+    request.Header["Authorization"] = "Basic " + string(encoded);
     request.Method = method;
     request.URL = url;
     request.URL.Userinfo = userinfo;

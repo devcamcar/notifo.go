@@ -44,7 +44,7 @@ func NewNotifoApiConn(apiusername string, apisecret string) *NotifoApiConn {
 }
 
 func (api *NotifoApiConn) SubscribeUser(username string) (*http.Response, os.Error) {
-    var data map[string]string;
+    data := make(map[string]string);
     data["username"] = username;
     
     return api.submitRequest("subscribe_user", "POST", data);
@@ -53,7 +53,7 @@ func (api *NotifoApiConn) SubscribeUser(username string) (*http.Response, os.Err
 func (api *NotifoApiConn) SendNotification(to string, msg string, label string,
         title string, uri string) (*http.Response, os.Error) {
             
-    var data map[string]string;
+    data := make(map[string]string);
 
     // TODO: Fail if to is blank.
     data["to"] = to;
@@ -82,13 +82,15 @@ func (api *NotifoApiConn) submitRequest(action string, method string,
 
     rawurl := strings.Join([]string { api.root, action, makeQueryString(data) }, "");
     
+    fmt.Printf("URL: %s\n", rawurl);
+    
     if request, err = prepareRequest(api.apiusername, api.apisecret, rawurl, method); err != nil {
         return nil, err;
     }
     
     if api.verbose {
         dump, _ := http.DumpRequest(request, true);
-        print(string(dump));
+        fmt.Printf(string(dump));
     }
     
     if response, err = send(request); err != nil {
@@ -138,15 +140,20 @@ func makeQueryString(data map[string]string) string {
 }
 
 func send(req *http.Request) (resp *http.Response, err os.Error) {
-    if req.URL.Scheme != "http" {
-        return nil, &badStringError{"unsupported protocol scheme", req.URL.Scheme}
-    }
-
     addr := req.URL.Host
+    
     if !hasPort(addr) {
-        addr += ":http"
+        if req.URL.Scheme == "http" {
+            addr += ":80";
+        } else if req.URL.Scheme == "https" {
+            addr += ":443";
+        } else {
+            return nil, &badStringError{"unsupported protocol scheme", req.URL.Scheme}
+        }
     }
+    
     info := req.URL.Userinfo
+    
     if len(info) > 0 {
         enc := base64.URLEncoding
         encoded := make([]byte, enc.EncodedLen(len(info)))
@@ -156,18 +163,22 @@ func send(req *http.Request) (resp *http.Response, err os.Error) {
         }
         req.Header["Authorization"] = "Basic " + string(encoded)
     }
+    
     conn, err := net.Dial("tcp", "", addr)
+    
     if err != nil {
         return nil, err
     }
 
     err = req.Write(conn)
+    
     if err != nil {
         conn.Close()
         return nil, err
     }
 
     reader := bufio.NewReader(conn)
+    
     resp, err = http.ReadResponse(reader, req.Method)
     if err != nil {
         conn.Close()

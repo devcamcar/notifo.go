@@ -1,21 +1,24 @@
 package main
 
 import (
-    "fmt";
     "http";
+    "log";
     "os";
     "notifo";
 )
+
+// TODO(devcamcar): support https in client lib
 
 func main() {
     var response *http.Response;
     var err       os.Error;
     
-    api := notifo.NewNotifoApiConn("username", "secret");
+    api := notifo.NewNotifoApiConn("gotest", "a25c4f206494150bddf2e716705c8bedcad0cb16");
     
     if response, err = api.SubscribeUser("devcamcar"); err != nil {
-        fmt.Printf("Error: %s\n", err.String());
+        log.Stderr(err)
     } else {
-        fmt.Printf("Response status: %d\n", response.StatusCode);
+        dump, _ := http.DumpResponse(response, true)
+        log.Stdout(string(dump))
     }
-}
+}        

@@ -18,8 +18,6 @@ type badStringError struct {
 
 func (e *badStringError) String() string { return fmt.Sprintf("%s %q", e.what, e.str) }
 
-func hasPort(s string) bool { return strings.LastIndex(s, ":") > strings.LastIndex(s, "]") }
-
 type readClose struct {
     io.Reader;
 	io.Closer;
@@ -35,11 +33,12 @@ type NotifoApiConn struct {
 
 func NewNotifoApiConn(apiusername string, apisecret string) *NotifoApiConn {
     return &NotifoApiConn {
-        root:           "https://api.notifo.com/v1/",
+        //root:           "https://api.notifo.com/v1/",
+        root:           "http://localhost:8001/v1/",
         apiusername:    apiusername,
         apisecret:      apisecret,
         client:         nil,
-        verbose:        false,
+        verbose:        true,
     }
 }
 
@@ -112,6 +111,8 @@ func prepareRequest(username string, secret string, rawurl string, method string
     userinfo := strings.Join([]string { username, secret }, ":");
     enc      := base64.URLEncoding;
     encoded  := make([]byte, enc.EncodedLen(len(userinfo)));
+    
+    fmt.Printf("userinfo: %s", userinfo);
  	
     enc.Encode(encoded, []byte(userinfo));
  	
@@ -140,17 +141,11 @@ func makeQueryString(data map[string]string) string {
 }
 
 func send(req *http.Request) (resp *http.Response, err os.Error) {
-    addr := req.URL.Host
-    
-    if !hasPort(addr) {
-        if req.URL.Scheme == "http" {
-            addr += ":80";
-        } else if req.URL.Scheme == "https" {
-            addr += ":443";
-        } else {
-            return nil, &badStringError{"unsupported protocol scheme", req.URL.Scheme}
-        }
-    }
+    // TODO(devcamcar): Support SSL.
+    //addr := strings.Join([]string { req.URL.Host, "80" }, ":");
+    addr := req.URL.Host;
+
+    fmt.Printf("addrs: %s", addr)
     
     info := req.URL.Userinfo
     
@@ -159,7 +154,7 @@ func send(req *http.Request) (resp *http.Response, err os.Error) {
         encoded := make([]byte, enc.EncodedLen(len(info)))
         enc.Encode(encoded, []byte(info))
         if req.Header == nil {
-                req.Header = make(map[string]string)
+            req.Header = make(map[string]string)
         }
         req.Header["Authorization"] = "Basic " + string(encoded)
     }

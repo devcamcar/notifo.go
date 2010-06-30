@@ -1,1 +1,5 @@
-A notifo API client implemented in golang
+A notifo API client implemented in golang.
+
+This is a work in progress and is currently on hold until https client support
+is provided by the golang http library.  On that note, anyone seen any
+implementations of a golang https client? :)

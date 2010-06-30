@@ -4,7 +4,7 @@ import (
     "bufio";
     "encoding/base64";
     "fmt";
-    "http";
+    "http"; // NOTE(devcamcar): No https support == sad face.
     "io";
     "net";
     "os";
@@ -32,9 +32,9 @@ type NotifoApiConn struct {
 }
 
 func NewNotifoApiConn(apiusername string, apisecret string) *NotifoApiConn {
+    // TODO(devcamcar): Make root an optional command line parameter.
     return &NotifoApiConn {
-        //root:           "https://api.notifo.com/v1/",
-        root:           "http://localhost:8001/v1/",
+        root:           "https://api.notifo.com/v1/",
         apiusername:    apiusername,
         apisecret:      apisecret,
         client:         nil,
@@ -54,10 +54,10 @@ func (api *NotifoApiConn) SendNotification(to string, msg string, label string,
             
     data := make(map[string]string);
 
-    // TODO: Fail if to is blank.
+    // TODO(devcamcar): Fail if to is blank.
     data["to"] = to;
     
-    // TODO: Fail if msg is blank.
+    // TODO(devcamcar): Fail if msg is blank.
     data["msg"] = msg;
     if len(label) > 0 {
         data["label"] = label;

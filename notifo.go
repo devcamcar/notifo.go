@@ -1,6 +1,7 @@
 package notifo
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
 	"strings"
@@ -35,18 +36,22 @@ func (api *NotifoApiClient) SendNotification(to string, msg string, label string
 	title string, uri string) (*http.Response, error) {
 	data := make(map[string]string)
 
-	// TODO(devcamcar): Fail if to is blank.
+	if to == "" {
+		return nil, errors.New("'to' must not be blank")
+	}
 	data["to"] = to
 
-	// TODO(devcamcar): Fail if msg is blank.
+	if msg == "" {
+		return nil, errors.New("'msg' must not be blank")
+	}
 	data["msg"] = msg
-	if len(label) > 0 {
+	if label != "" {
 		data["label"] = label
 	}
-	if len(title) > 0 {
+	if title != "" {
 		data["title"] = title
 	}
-	if len(uri) > 0 {
+	if uri != "" {
 		data["uri"] = uri
 	}
 

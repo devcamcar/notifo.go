@@ -1,6 +1,7 @@
 package notifo
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/url"
@@ -11,6 +12,12 @@ type NotifoApiClient struct {
 	endpoint    string
 	apiusername string
 	apisecret   string
+}
+
+type Response struct {
+	Status  string
+	Code    int    `json:"response_code"`
+	Message string `json:"response_message"`
 }
 
 func New(apiusername, apisecret string) *NotifoApiClient {
@@ -25,7 +32,7 @@ func (api *NotifoApiClient) SetEndpoint(endpoint string) {
 	api.endpoint = endpoint
 }
 
-func (api *NotifoApiClient) SubscribeUser(username string) (*http.Response, error) {
+func (api *NotifoApiClient) SubscribeUser(username string) (Response, error) {
 	data := make(map[string]string)
 	data["username"] = username
 
@@ -33,16 +40,16 @@ func (api *NotifoApiClient) SubscribeUser(username string) (*http.Response, erro
 }
 
 func (api *NotifoApiClient) SendNotification(to string, msg string, label string,
-	title string, uri string) (*http.Response, error) {
+	title string, uri string) (Response, error) {
 	data := make(map[string]string)
 
 	if to == "" {
-		return nil, errors.New("'to' must not be blank")
+		return Response{}, errors.New("'to' must not be blank")
 	}
 	data["to"] = to
 
 	if msg == "" {
-		return nil, errors.New("'msg' must not be blank")
+		return Response{}, errors.New("'msg' must not be blank")
 	}
 	data["msg"] = msg
 	if label != "" {
@@ -58,8 +65,10 @@ func (api *NotifoApiClient) SendNotification(to string, msg string, label string
 	return api.submitRequest("send_notification", "POST", data)
 }
 
-func (api *NotifoApiClient) submitRequest(action, method string, params map[string]string) (*http.Response, error) {
+func (api *NotifoApiClient) submitRequest(action, method string, params map[string]string) (Response, error) {
 	vals := url.Values{}
+	rv := Response{}
+
 	for k, v := range params {
 		vals.Add(k, v)
 	}
@@ -69,14 +78,17 @@ func (api *NotifoApiClient) submitRequest(action, method string, params map[stri
 	req, err := http.NewRequest(method, strings.Join([]string{api.endpoint, action}, "/"),
 		strings.NewReader(vals.Encode()))
 	if err != nil {
-		return nil, err
+		return rv, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.SetBasicAuth(api.apiusername, api.apisecret)
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return rv, err
 	}
+	defer resp.Body.Close()
+	d := json.NewDecoder(resp.Body)
+	err = d.Decode(&rv)
 
-	return resp, nil
+	return rv, nil
 }

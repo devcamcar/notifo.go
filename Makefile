@@ -1,7 +1,6 @@
-include $(GOROOT)/src/Make.$(GOARCH)
+include $(GOROOT)/src/Make.inc
 
-TARG=notifo
-GOFILES=\
-	notifo.go\
+TARG=github.com/devcamcar/notifo.go
+GOFILES=notifo.go
 
 include $(GOROOT)/src/Make.pkg

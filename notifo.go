@@ -20,6 +20,10 @@ type Response struct {
 	Message string `json:"response_message"`
 }
 
+func (r Response) Error() string {
+	return r.Message
+}
+
 func New(apiusername, apisecret string) *NotifoApiClient {
 	return &NotifoApiClient{
 		endpoint:    "https://api.notifo.com/v1/",
@@ -89,6 +93,12 @@ func (api *NotifoApiClient) submitRequest(action, method string, params map[stri
 	defer resp.Body.Close()
 	d := json.NewDecoder(resp.Body)
 	err = d.Decode(&rv)
+
+	if err == nil {
+		if rv.Status == "error" {
+			return rv, rv
+		}
+	}
 
 	return rv, nil
 }
